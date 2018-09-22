@@ -1,6 +1,7 @@
 import processing.sound.*;
 
 OnePole onePole;
+Reverb reverb;
 
 //==============================================================================
 float pi_2 = 6.28318530717959;
@@ -12,11 +13,12 @@ float frequency = 80;
 //==============================================================================
 
 // float OnePole onePole1;
-float freq = 440;
+// float freq = 440;
 float[] lFreq;
 OnePole[] onePoles; // Array of lowPass filters
-SawOsc[] sineWaves; // Array of sines
+SawOsc[] sawWaves; // Array of sines
 float[] sineFreq; // Array of frequencies
+float[] freq;
 int numSines = 5; // Number of oscillators to use
 
 void setup() {
@@ -24,9 +26,11 @@ void setup() {
   background(255);
 
   onePoles = new OnePole[numSines];
-  sineWaves = new SawOsc[numSines]; // Initialize the oscillators
+  sawWaves = new SawOsc[numSines]; // Initialize the oscillators
   sineFreq = new float[numSines]; // Initialize array for Frequencies
   lFreq = new float[numSines];
+  freq = new float[numSines];
+  reverb = new Reverb(this);
 
   for (int i = 0; i < numSines; i++) {
     // Calculate the amplitude for each oscillator
@@ -34,14 +38,22 @@ void setup() {
     //create the onePoles
     onePoles[i] = new OnePole((50.0 + ( i * 10)) / 44100);
     // Create the oscillators
-    sineWaves[i] = new SawOsc(this);
-    // Set panning
-    sineWaves[i].pan(random(-1.0,1.0));
+    sawWaves[i] = new SawOsc(this);
+    //divide saws over panning
+    sawWaves[i].pan(((2.0 / numSines) * i) - 1);
     // Start Oscillators
-    sineWaves[i].play();
+    sawWaves[i].play();
     // Set the amplitudes for all oscillators
-    sineWaves[i].amp(sineVolume);
+    sawWaves[i].amp(sineVolume);
+
+    freq[i] = random(50, 110);
+
+    reverb.process(sawWaves[i]);
+
   }
+  reverb.room(.1);
+  // reverb.damp(1.0);
+
 }
 
 void draw() {
@@ -49,14 +61,16 @@ void draw() {
   lfo = sin(phase * pi_2 );
   phase += frequency / 44100;
 
-  float rand = random(500);
-  if(rand > 490){
-    freq = random(50) + 60;
-}
   for (int i = 0; i < numSines; i++) {
-    lFreq[i] = onePoles[i].process(freq);
-    sineFreq[i] = lFreq[i] + 1 + (i * 0.050909091);
+    lFreq[i] = onePoles[i].process(freq[i]);
+    float x = pow(1.0594630943, i * i * i);
+    sineFreq[i] = lFreq[i] + (55 * x);
     // Set the frequencies for all oscillators
-    sineWaves[i].freq(sineFreq[i]);
+    sawWaves[i].freq(sineFreq[i]);
+    // reverb.process(sawWaves[i]);
+    float rand = random(1000);
+    if(rand > 980){
+      freq[i] = 55 * pow(1.0594630943,random(30));
+    }
   }
 }
