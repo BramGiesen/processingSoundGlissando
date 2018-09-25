@@ -109,10 +109,13 @@ float mtof(float midiPitch) {
 /* incoming osc message are forwarded to the oscEvent method. */
 void oscEvent(OscMessage theOscMessage) {
   numSines = theOscMessage.get(0).intValue();
+  int listLenght  = theOscMessage.get(1).intValue;
 
   if(theOscMessage.get(0).intValue() > 0){
-    for(int i = 0; i < theOscMessage.get(0).intValue(); i++){
-      oscX[i] = ((i * 3) + round(map(theOscMessage.get(i + 1).floatValue(), 0, 1280, 0, 23))) % 24;
+    for(int i = 2; i < theOscMessage.get(0).intValue(); i++){
+      for(int y = 0; y < listLenght; y++){
+        oscX[i-1][y] = (((y-1) * 3) + round(map(theOscMessage.get(y + 1).floatValue(), 0, 1280, 0, 23))) % 24;
+    }
   }
 }
   firstOSC = true;
